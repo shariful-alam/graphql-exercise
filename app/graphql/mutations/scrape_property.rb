@@ -1,12 +1,11 @@
 module Mutations
   class ScrapeProperty < Mutations::BaseMutation
-    argument :propertyName, String, required: true
+    argument :property_name, String, required: true
 
-    field :propertyName, String, null: false
-    def resolve(propertyName:)
-      {
-          propertyName: propertyName
-      }
+    type Types::PropertyType
+
+    def resolve(property_name:)
+      Property.create(name: property_name)
     end
   end
 end
