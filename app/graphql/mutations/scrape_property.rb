@@ -1,9 +1,8 @@
 module Mutations
   class ScrapeProperty < Mutations::BaseMutation
     argument :property_name, String, required: true
-
-    type Types::PropertyType
-
+    field :property, Types::PropertyType, null: false
+    field :errors, [String], null: false
     def resolve(property_name:)
       property = PropertyScraper.new(property_name).scrape_data
       if property.kind_of?(Property)
@@ -14,8 +13,8 @@ module Mutations
           }
         else
           {
-              property: nil,
-              errors: property.errors.full_messages
+              property: Property.new,
+              errors: property.errors.full_messages.join(",")
           }
         end
       else
