@@ -10,7 +10,7 @@ module Types
     def properties(propertyName:, startDate:, endDate:)
       start_date = Date.parse(startDate)
       end_date = Date.parse(endDate)
-      Property.where(name: propertyName, updated_at: start_date.beginning_of_day..end_date.end_of_day)
+      Property.where('name ilike :name AND updated_at >= :start_date AND updated_at <= :end_date', {name: propertyName, start_date: start_date, end_date: end_date})
     end
   end
 end
