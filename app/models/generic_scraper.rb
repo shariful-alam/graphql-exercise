@@ -21,9 +21,9 @@ class GenericScraper
     if property.nil?
       website_data =
         if website_url == 'https://www.livecarraway.com'
-          CarrawayScraper.new(website_url).get_data
+          CarrawayScraper.new(website_url).scrape_data
         elsif website_url == 'https://exoreston.com'
-          ExonRestonScraper.new(website_url).get_data
+          ExonRestonScraper.new(website_url).scrape_data
         else
           {}
         end

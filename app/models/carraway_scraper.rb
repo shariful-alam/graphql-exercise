@@ -4,7 +4,7 @@ class CarrawayScraper < GenericScraper
     @url = url
   end
 
-  def get_data
+  def scrape_data
     website_document = Nokogiri::HTML.parse(open(@url))
     amenities_url = website_document.xpath("//a[normalize-space()='Amenities']").first['href']
     floor_plan_url = website_document.xpath("//li[@id='menu-item-1760']//a[normalize-space()='Floor Plans']").first['href']

@@ -4,7 +4,7 @@ class ExonRestonScraper < GenericScraper
     @url = url
   end
 
-  def get_data
+  def scrape_data
     website_document = Nokogiri::HTML.parse(open(@url))
     amenities_url = @url + website_document.xpath("//a[@class='header__menu-link'][normalize-space()='Amenities']").first['href']
     floor_plan_url = @url + website_document.xpath("//a[@class='header__menu-link'][normalize-space()='Floor Plans']").first['href']
