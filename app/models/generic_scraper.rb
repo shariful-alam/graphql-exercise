@@ -10,28 +10,31 @@ class GenericScraper
   end
 
   def scrape_data
-    url = "https://www.google.com/search?q=#{@search_string}&hl=en"
+    url = "https://www.google.com/search?q=#{@search_string}&hl=en&cr=countryUS"
     document = Nokogiri::HTML.parse(open(url))
-    property_name = document.xpath("//div[@class='kCrYT']//span//h3[@class='zBAuLc']").text
-    property_address = document.css('.vbShOe.kCrYT span.BNeawe.tAd8D.AP7Wnd').first.text
-    website_url = document.xpath("//div[@class='kCrYT']//a[2]").first['href']
-    website_url = (website_url.split('.com').first + '.com').split('=').last
-    hours = document.xpath("//div[2]//div[1]//span[2]//span[1]").text
-    website_data =
-      if website_url == 'https://www.livecarraway.com'
-        CarrawayScraper.new(website_url).scrape_data
-      elsif website_url == 'https://exoreston.com'
-        ExonRestonScraper.new(website_url).scrape_data
-      else
-        {}
-      end
+    property_name = document.xpath("//div[@class='kCrYT']//span//h3[@class='zBAuLc']")
+    if property_name.blank?
+      url = "https://www.google.com/search?q=#{@search_string} apartments&hl=en&cr=countryUS"
+      document = Nokogiri::HTML.parse(open(url))
+    end
+    property_name = document.xpath("//div[@class='kCrYT']//span//h3[@class='zBAuLc']")
+    if property_name.blank?
+      anchor_tags = document.css('#main').search('a')
+    else
+      property_name = property_name.text
+      property_address = document.css('.vbShOe.kCrYT span.BNeawe.tAd8D.AP7Wnd').first.text
+      website_url = document.xpath("//div[@class='kCrYT']//a[2]").first['href']
+      website_url = (website_url.split('.com').first + '.com').split('=').last
+      hours = document.xpath("//div[2]//div[1]//span[2]//span[1]").text
+    end
+    website_data = PropertyWebsiteScraper.new(website_url).scrape_data
     property = Property.where('name ilike :search', { search: property_name }).first
     if property.nil?
       Property.new(
-        name: property_name,
-        website_url: website_url,
-        hours: { hours: hours },
-        address: property_address,
+        name: google_data[:property_name],
+        website_url: google_data[:website_url],
+        hours: { hours: google_data[:hours] },
+        address: google_data[:property_address],
         amenities_url: website_data[:amenities_url],
         floor_plan_url: website_data[:floor_plan_url],
         gallery_url: website_data[:gallery_url],
