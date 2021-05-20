@@ -6,12 +6,7 @@ module Mutations
     def resolve(property_name:)
       property = GenericScraper.new(property_name).scrape_data
       if property.kind_of?(Property)
-        if property.persisted?
-          {
-            property: property,
-            errors: []
-          }
-        elsif property.save
+        if property.save
           {
             property: property,
             errors: []
