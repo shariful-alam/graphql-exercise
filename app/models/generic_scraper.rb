@@ -10,14 +10,14 @@ class GenericScraper
   end
 
   def scrape_data
-    url = "https://www.google.com/search?q=#{@search_string}&hl=en&cr=countryUS"
+    url = "https://www.google.com/search?q=#{@search_string} apartments&hl=en&cr=countryUS"
     document = Nokogiri::HTML.parse(open(url))
     property_name = document.xpath("//div[@class='kCrYT']//span//h3[@class='zBAuLc']")
     if property_name.blank?
-      url = "https://www.google.com/search?q=#{@search_string} apartments&hl=en&cr=countryUS"
+      url = "https://www.google.com/search?q=#{@search_string}&hl=en&cr=countryUS"
       document = Nokogiri::HTML.parse(open(url))
     end
-    property_name = document.xpath("//div[@class='kCrYT']//span//h3[@class='zBAuLc']")
+    property_name ||= document.xpath("//div[@class='kCrYT']//span//h3[@class='zBAuLc']")
     if property_name.blank?
       apartments_dot_com_url = document.css("//a[@href*='apartments.com']").first
       apartments_dot_com_url = apartments_dot_com_url['href'].split('q=').last.split('&sa=').first
@@ -57,6 +57,7 @@ class GenericScraper
       instagram_url: website_data[:instagram_url]
     )
   end
+
   def update_property(property, website_data)
     property.amenities_url = website_data[:amenities_url]
     property.floor_plan_url = website_data[:floor_plan_url]
