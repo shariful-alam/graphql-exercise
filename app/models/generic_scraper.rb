@@ -19,7 +19,8 @@ class GenericScraper
     end
     property_name = document.xpath("//div[@class='kCrYT']//span//h3[@class='zBAuLc']")
     if property_name.blank?
-      anchor_tags = document.css('#main').search('a')
+      apartments_dot_com_url = document.css("//a[@href*='apartments.com']").first
+      apartments_dot_com_url = apartments_dot_com_url['href'].split('q=').last.split('&sa=').first
     else
       property_name = property_name.text
       property_address = document.css('.vbShOe.kCrYT span.BNeawe.tAd8D.AP7Wnd').first.text
@@ -28,13 +29,15 @@ class GenericScraper
       hours = document.xpath("//div[2]//div[1]//span[2]//span[1]").text
     end
     website_data = PropertyWebsiteScraper.new(website_url).scrape_data
+    puts 'website data'
+    puts website_data
     property = Property.where('name ilike :search', { search: property_name }).first
     if property.nil?
       Property.new(
-        name: google_data[:property_name],
-        website_url: google_data[:website_url],
-        hours: { hours: google_data[:hours] },
-        address: google_data[:property_address],
+        name: property_name,
+        website_url: website_url,
+        hours: { hours: hours },
+        address: property_address,
         amenities_url: website_data[:amenities_url],
         floor_plan_url: website_data[:floor_plan_url],
         gallery_url: website_data[:gallery_url],
