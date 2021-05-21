@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ApartmentsDotComScraper < GenericScraper
   def initialize(url)
     @url = url
@@ -9,7 +11,9 @@ class ApartmentsDotComScraper < GenericScraper
     website_url = document.xpath("//a[@title='View Property Website']").first
     website_data = {}
     if website_url.blank?
-      puts 'Will Scrape from Apartments.com'
+      website_data[:amenities_url] = "#{@url}##{document.xpath("//button[normalize-space()='Amenities']").first['data-sectionid']}"
+      website_data[:floor_plan_url] = "#{@url}##{document.xpath("//button[normalize-space()='Pricing']").first['data-sectionid']}"
+      website_data[:contact_us_url] = "#{@url}##{document.xpath("//button[normalize-space()='Contact']").first['data-sectionid']}"
     else
       website_data = PropertyWebsiteScraper.new(website_url['href']).scrape_data
       website_data[:website_url] = website_url['href']
@@ -24,9 +28,9 @@ class ApartmentsDotComScraper < GenericScraper
       hours_hash[day] = time
     end
     website_data[:hours] = hours_hash
-    address = document.xpath("//body/div[@class='mainWrapper']/main/section[@id='profileApp']/div[@id='profileWrapper']/div[@id='profilePaid']/div[@class='profileContent']/header[@id='profileHeaderWrapper']/div[@id='propertyHeader']/div[@class='column columnOne']/div[@id='propertyAddressRow']/div[@class='propertyAddressContainer']/h2[1]/span[1]").text + ', '
-    address = address + document.xpath("//body/div[@class='mainWrapper']/main/section[@id='profileApp']/div[@id='profileWrapper']/div[@id='profilePaid']/div[@class='profileContent']/header[@id='profileHeaderWrapper']/div[@id='propertyHeader']/div[@class='column columnOne']/div[@id='propertyAddressRow']/div[@class='propertyAddressContainer']/h2[1]/span[2]").text + ', '
-    address = address + document.xpath("//span[@class='stateZipContainer']").text.split(' ').join(' ')
+    address = "#{document.xpath("//body/div[@class='mainWrapper']/main/section[@id='profileApp']/div[@id='profileWrapper']/div[@id='profilePaid']/div[@class='profileContent']/header[@id='profileHeaderWrapper']/div[@id='propertyHeader']/div[@class='column columnOne']/div[@id='propertyAddressRow']/div[@class='propertyAddressContainer']/h2[1]/span[1]").text}, "
+    address = "#{address}#{document.xpath("//body/div[@class='mainWrapper']/main/section[@id='profileApp']/div[@id='profileWrapper']/div[@id='profilePaid']/div[@class='profileContent']/header[@id='profileHeaderWrapper']/div[@id='propertyHeader']/div[@class='column columnOne']/div[@id='propertyAddressRow']/div[@class='propertyAddressContainer']/h2[1]/span[2]").text}, "
+    address += document.xpath("//span[@class='stateZipContainer']").text.split(' ').join(' ')
     website_data[:address] = address
     website_data
   end
