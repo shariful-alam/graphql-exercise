@@ -10,21 +10,29 @@ class GenericScraper
   end
 
   def scrape_data
-    url = "https://www.google.com/search?q=#{@search_string} apartments&hl=en&cr=countryUS"
+    url = "https://www.google.com/search?q=#{@search_string}&hl=en&cr=countryUS"
     document = Nokogiri::HTML.parse(open(url))
     property_name = document.xpath("//div[@class='kCrYT']//span//h3[@class='zBAuLc']")
-    if property_name.blank?
-      url = "https://www.google.com/search?q=#{@search_string}&hl=en&cr=countryUS"
+    website_url = document.xpath("//div[@class='kCrYT']//a[2]").first
+    if property_name.blank? || website_url.blank?
+      url = "https://www.google.com/search?q=#{@search_string} apartments&hl=en&cr=countryUS"
       document = Nokogiri::HTML.parse(open(url))
     end
-    property_name ||= document.xpath("//div[@class='kCrYT']//span//h3[@class='zBAuLc']")
-    if property_name.blank?
+    property_name = document.xpath("//div[@class='kCrYT']//span//h3[@class='zBAuLc']")
+    website_url = document.xpath("//div[@class='kCrYT']//a[2]").first
+    if property_name.blank? || website_url.blank?
       apartments_dot_com_url = document.css("//a[@href*='apartments.com']").first
-      apartments_dot_com_url = apartments_dot_com_url['href'].split('q=').last.split('&sa=').first
-      website_data = ApartmentsDotComScraper.new(apartments_dot_com_url).scrape_data
+      if apartments_dot_com_url.blank?
+        raise "Unable to parse expected results!!"
+      else
+        apartments_dot_com_url = apartments_dot_com_url['href'].split('q=').last.split('&sa=').first
+        website_data = ApartmentsDotComScraper.new(apartments_dot_com_url).scrape_data
+      end
     else
       website_url = document.xpath("//div[@class='kCrYT']//a[2]").first['href']
-      website_url = (website_url.split('.com').first + '.com').split('=').last
+      website_url = website_url.split('q=').last.split('&sa=').first
+      website_url = website_url.split('%3F').first if website_url.include?('%3F')
+      website_url = website_url.split('?').first if website_url.include?('?')
       website_data = PropertyWebsiteScraper.new(website_url).scrape_data
       website_data[:property_name] = property_name.text
       website_data[:address] = document.css('.vbShOe.kCrYT span.BNeawe.tAd8D.AP7Wnd').first.text
@@ -37,9 +45,20 @@ class GenericScraper
     else
       update_property(property, website_data)
     end
+  rescue SocketError, Net::ReadTimeout => e
+    handle_error(e, 'Something went wrong!! Please check your internet connection.')
+  rescue NoMethodError, RuntimeError => e
+    handle_error(e, 'Unable to parse expected results!!')
+  rescue StandardError => e
+    handle_error(e, e.message)
   end
 
   private
+
+  def handle_error(error, message)
+    Rails.logger.error error.message
+    message
+  end
 
   def initialize_property(website_data)
     Property.new(
